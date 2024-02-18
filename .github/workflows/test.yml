@@ -1,18 +1,38 @@
-name: Deploy to GitHub Pages
+name: Handle Form Submission and Deploy to GitHub Pages
 
 on:
   push:
     branches:
       - main
+    paths:
+      - 'submit_form.php'  # Path to your PHP script
+      - 'index.html'       # Path to your HTML file
 
 jobs:
-  deploy:
+  handle-form-submission:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.4'  # Choose the PHP version you want to use
+
+      - name: Run PHP script
+        if: ${{ 'submit_form.php' in github.event.commits[*].modified }}
+        run: php submit_form.php  # Run your PHP script
+
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    needs: [handle-form-submission]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
       - name: Deploy to GitHub Pages
+        if: ${{ 'index.html' in github.event.commits[*].modified }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.TOKEN }}
